@@ -1,6 +1,6 @@
 import streamlit as st
-from hamster_tools.auth.google_auth import google_login_button, verify_google_token
-from hamster_tools.auth.session import login
+from hamrlab_tools.auth.google_auth import google_login_button, verify_google_token
+from hamrlab_tools.auth.session import login
 
 
 def login_page():
@@ -19,3 +19,4 @@ def login_page():
             st.rerun()
 
     st.info("請使用 Google 帳號登入")
+
