@@ -1,0 +1,8 @@
+streamlit
+google-auth
+google-auth-oauthlib
+pandas
+numpy
+yfinance
+plotly
+matplotlib
