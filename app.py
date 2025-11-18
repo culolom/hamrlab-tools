@@ -1,21 +1,70 @@
 import streamlit as st
+import urllib.parse
 
-from hamrlab_tools.auth.session import init_session, is_logged_in
-from hamrlab_tools.auth.login_page import login_page
-from hamrlab_tools.auth.logout import logout_button
-from hamrlab_tools.auth.google_auth import google_login_button, verify_google_token
+GOOGLE_CLIENT_ID = st.secrets["google"]["client_id"]
 
-# 初始化 session
-init_session()
+# 你的正式 redirect URL
+REDIRECT_URI = "https://hamrlab-tools-n8h6issmc9pjq9vq6kzptn.streamlit.app/"
 
-# 未登入 → 顯示登入頁
-if not is_logged_in():
-    login_page()
-    st.stop()
+def google_login_button():
+    base_url = "https://accounts.google.com/o/oauth2/v2/auth"
 
-# 已登入 → 顯示主系統
-st.sidebar.write(f"👋 歡迎：{st.session_state['user']['email']}")
-logout_button()
+    params = {
+        "response_type": "token",
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "scope": "openid email profile",
+        "prompt": "select_account"
+    }
 
-st.title("HamrLab 投資工具平台")
-st.write("請從左側選單選擇功能")
+    auth_url = f"{base_url}?{urllib.parse.urlencode(params)}"
+
+    html = f"""
+    <style>
+        .google-btn {{
+            display: inline-flex;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #dadce0;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            color: #3c4043;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }}
+        .google-btn:hover {{
+            background-color: #f7f8f8;
+        }}
+        .google-icon {{
+            height: 24px;
+            margin-right: 12px;
+        }}
+    </style>
+    <a href="{auth_url}">
+        <div class="google-btn">
+            <img class="google-icon" src="https://developers.google.com/identity/images/g-logo.png">
+            使用 Google 帳號登入
+        </div>
+    </a>
+    """
+
+    st.markdown(html, unsafe_allow_html=True)
+
+
+def verify_google_token(token):
+    """
+    前端使用 response_type=token 回傳的 token
+    格式是 access_token，需要調 Google API 取 userinfo
+    """
+    import requests
+
+    url = "https://www.googleapis.com/oauth2/v3/userinfo"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = requests.get(url, headers=headers)
+
+    if r.status_code == 200:
+        return r.json()  # {email, name, picture, sub}
+    return None
